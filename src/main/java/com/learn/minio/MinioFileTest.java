@@ -14,7 +14,6 @@ import java.io.InputStream;
  */
 public class MinioFileTest {
     private static MinioClient minioClient;
-    private static String bucketName = "test";
 
     static {
         minioClient = new MinioClient.Builder()
