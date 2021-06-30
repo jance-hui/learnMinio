@@ -1,4 +1,4 @@
-package com.learn.minio.constants;
+package com.learn.minio;
 
 public class BaseConstants {
 

@@ -1,6 +1,5 @@
-package com.learn.minio.bucker;
+package com.learn.minio;
 
-import com.learn.minio.constants.BaseConstants;
 import io.minio.*;
 import io.minio.messages.Bucket;
 import io.minio.messages.Item;

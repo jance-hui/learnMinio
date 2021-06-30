@@ -1,6 +1,5 @@
 package com.learn.minio;
 
-import com.learn.minio.constants.BaseConstants;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;

@@ -1,15 +1,11 @@
-package com.learn.minio.file;
+package com.learn.minio;
 
-import com.learn.minio.constants.BaseConstants;
 import io.minio.*;
-import io.minio.messages.Bucket;
-import io.minio.messages.Item;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.List;
 
 /**
  * Minio 文件测试：
