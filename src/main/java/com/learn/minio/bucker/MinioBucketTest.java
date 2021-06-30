@@ -1,7 +1,10 @@
 package com.learn.minio.bucker;
 
+import com.learn.minio.constants.BaseConstants;
 import io.minio.*;
 import io.minio.messages.Bucket;
+import io.minio.messages.Item;
+import io.minio.messages.Upload;
 
 import java.util.List;
 
@@ -15,17 +18,19 @@ public class MinioBucketTest {
 
     static {
         minioClient = new MinioClient.Builder()
-                .endpoint("http://42.192.88.139", 9001, false)
-                .credentials("minioadmin", "minioadmin")
+                .endpoint(BaseConstants.MinioClient.IP, BaseConstants.MinioClient.PORT, false)
+                .credentials(BaseConstants.MinioClient.ACCESS_KEY, BaseConstants.MinioClient.SECRET_KEY)
                 .build();
     }
 
     public static void main(String[] args) {
-        createBucket("test2");
-        listBucket();
-        removeBucket("test2");
-        listBucket();
-//        listObjects("test",null,true,false);
+//        createBucket("test2");
+//        listBucket();
+//        removeBucket("test2");
+//        listBucket();
+//        listObjects("learn",null,true,false);
+        getBucketPolicy("learn");
+//        setBucketPolicy("learn","123");
     }
 
     /**
@@ -102,91 +107,69 @@ public class MinioBucketTest {
             }
         }
     }
-//
-//    /**
-//     * 列出某个存储桶中的所有对象
-//     * @param bucketName 存储桶名称
-//     * @param prefix 对象名称的前缀
-//     * @param recursive 是否递归查找，如果是false,就模拟文件夹结构查找。
-//     * @param useVersion1 如果是true, 使用版本1 REST API
-//     */
-//    public static void listObjects(String bucketName, String prefix, boolean recursive, boolean useVersion1){
-//        System.out.println("----------列出某个存储桶中的所有对象----------");
-//        if (isBucketExists(bucketName)){
-//            try {
-//                ListObjectsArgs args = ListObjectsArgs.builder().bucket(bucketName).build();
-//                Iterable<Result<Item>> myObjects = minioClient.listObjects(bucketName, prefix, recursive, useVersion1);
-//                if (myObjects.spliterator().getExactSizeIfKnown() == 0){
-//                    System.out.println("存储桶["+bucketName+"]中没有文件/文件夹");
-//                } else {
-//                    System.out.println("存储桶["+bucketName+"]中文件/文件夹信息如下：");
-////                    for (Result<Item> result : myObjects) {
-////                        Item item = result.get();
-////                        System.out.println("文件名:"+item.objectName()+",上次修改时间:"+item.lastModified()
-////                                +",文件大小:"+item.objectSize()+"B,是否文件夹:"+item.isDir());
-////                    }
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
 
-//    /**
-//     * 列出存储桶中被部分上传的对象
-//     * @param bucketName 存储桶名称
-//     * @param prefix 对象名称的前缀
-//     * @param recursive 是否递归查找，如果是false,就模拟文件夹结构查找。
-//     */
-//    public static void listIncompleteUploads(String bucketName, String prefix, boolean recursive){
-//        System.out.println("----------列出存储桶中被部分上传的对象----------");
-//        if (isBucketExists(bucketName)){
-//            try {
-//                Iterable<Result<Upload>> myObjects = minioClient.listIncompleteUploads(bucketName, prefix, recursive);
-//                if (myObjects.spliterator().getExactSizeIfKnown() == 0){
-//                    System.out.println("存储桶["+bucketName+"]中没有部分上传的文件");
-//                } else {
-//                    System.out.println("存储桶["+bucketName+"]中部分上传的文件如下：");
-//                    for (Result<Upload> result : myObjects) {
-//                        Upload item = result.get();
-//                        System.out.println("文件名:"+item.objectName()+",正在上传");
-//                    }
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-//
-//    /**
-//     * 获得指定存储桶策略
-//     * @param bucketName 存储桶名称
-//     */
-//    public static void getBucketPolicy(String bucketName){
-//        System.out.println("----------获得指定存储桶策略----------");
-//        if (isBucketExists(bucketName)){
-//            try {
-//                System.out.println("存储桶["+bucketName+"]策略:"+minioClient.getBucketPolicy(bucketName));
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-//
-//    /**
-//     * 给指定存储桶设置策略
-//     * @param bucketName 存储桶名称
-//     * @param policy 要赋予的策略
-//     */
-//    public static void setBucketPolicy(String bucketName, String policy){
-//        System.out.println("----------给指定存储桶设置策略----------");
-//        if (isBucketExists(bucketName)){
-//            try {
-//                minioClient.setBucketPolicy(bucketName, policy);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
+    /**
+     * 列出某个存储桶中的所有对象
+     * @param bucketName 存储桶名称
+     * @param prefix 对象名称的前缀
+     * @param recursive 是否递归查找，如果是false,就模拟文件夹结构查找。
+     * @param useVersion1 如果是true, 使用版本1 REST API
+     */
+    public static void listObjects(String bucketName, String prefix, boolean recursive, boolean useVersion1){
+        System.out.println("----------列出某个存储桶中的所有对象----------");
+        if (isBucketExists(bucketName)){
+            try {
+                ListObjectsArgs args = ListObjectsArgs.builder().bucket(bucketName)
+                        .prefix(prefix).recursive(recursive).useApiVersion1(useVersion1).build();
+                Iterable<Result<Item>> myObjects = minioClient.listObjects(args);
+                if (myObjects.spliterator().getExactSizeIfKnown() == 0){
+                    System.out.println("存储桶["+bucketName+"]中没有文件/文件夹");
+                } else {
+                    System.out.println("存储桶["+bucketName+"]中文件/文件夹信息如下：");
+                    for (Result<Item> result : myObjects) {
+                        Item item = result.get();
+                        System.out.println("文件名:"+item.objectName()+",上次修改时间:"+item.lastModified()
+                                +",文件大小:"+item.size()+"B,是否文件夹:"+item.isDir());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 获得指定存储桶策略
+     * @param bucketName 存储桶名称
+     */
+    public static void getBucketPolicy(String bucketName){
+        System.out.println("----------获得指定存储桶策略----------");
+        if (isBucketExists(bucketName)){
+            try {
+                GetBucketPolicyArgs args = GetBucketPolicyArgs.builder().bucket(bucketName).build();
+                System.out.println("存储桶["+bucketName+"]策略:"+minioClient.getBucketPolicy(args));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 给指定存储桶设置策略
+     * @param bucketName 存储桶名称
+     * @param policyJson 要赋予的策略Json
+     */
+    public static void setBucketPolicy(String bucketName, String policyJson){
+        System.out.println("----------给指定存储桶设置策略----------");
+        if (isBucketExists(bucketName)){
+            try {
+                SetBucketPolicyArgs args = SetBucketPolicyArgs.builder().bucket(bucketName).config(policyJson).build();
+                minioClient.setBucketPolicy(args);
+                getBucketPolicy(bucketName);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }
