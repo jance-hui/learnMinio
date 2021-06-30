@@ -1,132 +1,165 @@
-//package com.learn.minio.file;
-//
-//import io.minio.MinioClient;
-//import io.minio.Result;
-//import io.minio.errors.InvalidEndpointException;
-//import io.minio.errors.InvalidPortException;
-//import io.minio.messages.Bucket;
-//import io.minio.messages.Item;
-//
-//import java.util.List;
-//
-///**
-// * Minio 文件测试：
-// * 创建、查询、删除文件夹
-// * 创建、查询、删除文件
-// */
-//public class MinioFileTest {
-//    private static MinioClient minioClient;
-//    private static String bucketName = "test";
-//
-//    static {
-//        try {
-//            minioClient = new MinioClient("http://42.192.88.139", 9001, "minioadmin", "minioadmin");
-//        } catch (InvalidEndpointException | InvalidPortException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    public static void main(String[] args) {
-//        createBucket("test2");
-//        listBucket();
-//        removeBucket("test2");
-//        listBucket();
-//        listObjects("test",null,true,false);
-//    }
-//
-//    /**
-//     * 创建存储桶
-//     * @param bucketName 存储桶名称
-//     */
-//    public static void createBucket(String bucketName){
-//        System.out.println("----------创建存储桶----------");
-//        if (!isBucketExists(bucketName)){
-//            try {
-//                minioClient.makeBucket(bucketName);
-//                System.out.println("存储桶["+bucketName+"]创建完成");
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-//
-//    /**
-//     * 检查存储桶是否存在
-//     * @param bucketName 存储桶名称
-//     */
-//    public static boolean isBucketExists(String bucketName){
-//        System.out.println("----------检查存储桶是否存在----------");
-//        boolean found = false;
-//        try {
-//            found = minioClient.bucketExists(bucketName);
-//            if (found){
-//                System.out.println("存储桶["+bucketName+"]已存在");
-//            } else {
-//                System.out.println("存储桶["+bucketName+"]不存在");
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return found;
-//    }
-//
-//    /**
-//     * 列出所有存储桶
-//     */
-//    public static void listBucket(){
-//        System.out.println("----------列出所有存储桶----------");
-//        try {
-//            List<Bucket> list = minioClient.listBuckets();
-//            if (list.isEmpty()){
-//                System.out.println("暂无存储桶信息");
-//            } else {
-//                System.out.println("存在一下存储桶信息：");
-//                for (Bucket bucket : list) {
-//                    System.out.println("存储桶名称:"+bucket.name()+",创建时间:"+bucket.creationDate());
-//                }
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    /**
-//     * 删除存储桶
-//     * @param bucketName 存储桶名称
-//     */
-//    public static void removeBucket(String bucketName){
-//        System.out.println("----------删除存储桶----------");
-//        if (isBucketExists(bucketName)){
-//            try {
-//                minioClient.removeBucket(bucketName);
-//                System.out.println("存储桶["+bucketName+"]删除完成");
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-//
-//    /**
-//     * 列出某个存储桶中的所有对象
-//     * @param bucketName 存储桶名称
-//     * @param prefix 对象名称的前缀
-//     * @param recursive 是否递归查找，如果是false,就模拟文件夹结构查找。
-//     * @param useVersion1 如果是true, 使用版本1 REST API
-//     */
-//    public static void listObjects(String bucketName, String prefix, boolean recursive, boolean useVersion1){
-//        System.out.println("----------列出某个存储桶中的所有对象----------");
-//        if (isBucketExists(bucketName)){
-//            try {
-//                Iterable<Result<Item>> myObjects = minioClient.listObjects(bucketName, prefix, recursive, useVersion1);
-//                for (Result<Item> result : myObjects) {
-//                    Item item = result.get();
-//                    System.out.println("文件名:"+item.objectName()+",上次修改时间:"+item.lastModified()
-//                            +",文件大小:"+item.objectSize()+"B,是否文件夹:"+item.isDir());
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-//
-//}
+package com.learn.minio.file;
+
+import com.learn.minio.constants.BaseConstants;
+import io.minio.*;
+import io.minio.messages.Bucket;
+import io.minio.messages.Item;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.List;
+
+/**
+ * Minio 文件测试：
+ * 创建、查询、删除文件夹
+ * 创建、查询、删除文件
+ */
+public class MinioFileTest {
+    private static MinioClient minioClient;
+    private static String bucketName = "test";
+
+    static {
+        minioClient = new MinioClient.Builder()
+                .endpoint(BaseConstants.MinioClient.IP, BaseConstants.MinioClient.PORT, false)
+                .credentials(BaseConstants.MinioClient.ACCESS_KEY, BaseConstants.MinioClient.SECRET_KEY)
+                .build();
+    }
+
+    public static void main(String[] args) {
+        //getObject("learn", "aaa.txt");
+        //putObject("learn", "D:/aaa.txt");
+        //createFolder("learn", "test");
+        //copyObject("learn", "aaa.txt", "learn2", "bbb.txt");
+        removeObject("learn2", "bbb.txt");
+    }
+
+    /**
+     * 判断对象是否存在
+     * @param bucketName 存储桶名称
+     * @param objectName 存储桶里的对象名称
+     */
+    public static boolean statObject(String bucketName, String objectName){
+        System.out.println("----------判断对象是否存在----------");
+        try {
+            StatObjectArgs args = StatObjectArgs.builder().bucket(bucketName).object(objectName).build();
+            minioClient.statObject(args);
+            System.out.println("存储桶["+bucketName+"]中存在对象["+objectName+"]");
+            return true;
+        } catch (Exception e) {
+            System.out.println("存储桶["+bucketName+"]不存在对象["+objectName+"]");
+            return false;
+        }
+    }
+
+    /**
+     * 下载文件对象
+     * @param bucketName 存储桶名称
+     * @param objectName 存储桶里的对象名称
+     */
+    public static void getObject(String bucketName, String objectName){
+        System.out.println("----------下载文件对象----------");
+        if (statObject(bucketName, objectName)){
+            try {
+                GetObjectArgs args = GetObjectArgs.builder().bucket(bucketName).object(objectName).build();
+                GetObjectResponse response = minioClient.getObject(args);
+                byte[] buf = new byte[16384];
+                int bytesRead;
+                System.out.println("文件信息如下");
+                while ((bytesRead = response.read(buf, 0, buf.length)) >= 0) {
+                    System.out.println(new String(buf, 0, bytesRead));
+                }
+                System.out.println("文件信息读取完成");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 上传文件对象
+     * @param bucketName 存储桶名称
+     * @param filePath 文件路径
+     */
+    public static void putObject(String bucketName, String filePath){
+        System.out.println("----------上传文件对象----------");
+        try {
+            File file = new File(filePath);
+            InputStream in = new FileInputStream(file);
+            String fileName = file.getName();
+            PutObjectArgs putObjectArgs = PutObjectArgs.builder().bucket(bucketName)
+                    .object(fileName).stream(in, in.available(), -1).build();
+            minioClient.putObject(putObjectArgs);
+            System.out.println("文件["+fileName+"]，成功上传到存储桶["+bucketName+"]中。");
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 创建文件夹
+     * @param bucketName 存储桶名称
+     * @param folderName 文件夹名称
+     */
+    public static void createFolder(String bucketName, String folderName){
+        System.out.println("----------创建文件夹----------");
+        try {
+            PutObjectArgs putObjectArgs = PutObjectArgs.builder().bucket(bucketName)
+                    .object(folderName+"/").stream(new ByteArrayInputStream(new byte[] {}), 0, -1)
+                    .build();
+            minioClient.putObject(putObjectArgs);
+            System.out.println("文件夹["+folderName+"]，创建成功。");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 文件对象拷贝
+     * @param bucketName 存储桶名称
+     * @param objectName 源存储桶中的源对象名称
+     * @param srcBucketName 目标bucket名称
+     * @param srcObjectName 目标文件名称
+     */
+    public static void copyObject(String bucketName, String objectName,
+                                  String srcBucketName, String srcObjectName){
+        System.out.println("----------文件对象拷贝----------");
+        if (statObject(bucketName, objectName)){
+            try {
+                CopyObjectArgs args = CopyObjectArgs.builder()
+                        .source(CopySource.builder().bucket(bucketName).object(objectName).build())
+                        .bucket(srcBucketName)
+                        .object(srcObjectName)
+                        .build();
+                minioClient.copyObject(args);
+                System.out.println("存储桶["+bucketName+"]中文件["+objectName+"]，" +
+                        "成功拷贝至存储桶["+srcBucketName+"]文件["+srcObjectName+"]。");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 文件对象删除
+     * @param bucketName 存储桶名称
+     * @param objectName 存储桶里的对象名称
+     */
+    public static void removeObject(String bucketName, String objectName){
+        System.out.println("----------文件对象删除----------");
+        if (statObject(bucketName, objectName)){
+            try {
+                RemoveObjectArgs args = RemoveObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .build();
+                minioClient.removeObject(args);
+                System.out.println("存储桶["+bucketName+"]中文件["+objectName+"]删除成功");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
